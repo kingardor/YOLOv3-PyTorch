@@ -41,7 +41,12 @@ Deactivating a virtual environment:
 ```sh
 deactivate
 ```
+## Download YOLOv3 Weights
 
+Download the weights using the following command
+```sh
+wget -O yolov3.weights https://pjreddie.com/media/files/yolov3.weights
+```
 ## Running Detection
 
 Run the folllowing script to start the detector
