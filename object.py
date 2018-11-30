@@ -6,6 +6,7 @@ from scripts.util import *
 from scripts.darknet import Darknet
 from scripts.preprocess import prep_image
 import argparse
+import random
 
 class Detection:
     cfgfile = "cfg/yolov3.cfg"
@@ -19,6 +20,21 @@ class Detection:
     CUDA = False
     model = None
     inp_dimensions = None
+    colors = list()
+
+    def color_generator(self):
+        ''' Generate a color pallete for different objects.
+        '''
+
+        for i in range(0, 80):
+            temp = list()
+            b = random.randint(0, 255)
+            g = random.randint(0, 255)
+            r = random.randint(0, 255)
+            temp.append(b)
+            temp.append(g)
+            temp.append(r)
+            self.colors.append(temp)
 
     def draw_results(self, x, img):
         ''' 
@@ -32,7 +48,7 @@ class Detection:
         if not label == 'person':
             return
         score = str("{0:.3f}".format(float(x[5])))
-        color = (255, 255, 0)
+        color = self.colors[cls]
         cv2.rectangle(img, c1, c2, color, 2)
         cv2.rectangle(img, c1, (c1[0] + (len(label) + len(score)) * 10, 
                       c1[1] - 10) , color, -1, cv2.LINE_AA)
@@ -142,6 +158,7 @@ class Detection:
 
         self.model.eval()
 
+        self.color_generator()
         cv2.namedWindow("Person Detection", cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty("Person Detection", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
