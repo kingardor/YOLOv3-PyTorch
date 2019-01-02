@@ -101,32 +101,21 @@ class Detection:
                 output = self.model(Variable(img), self.CUDA)
                 output = write_results(output, self.confidence, self.num_classes, nms = True, nms_conf = self.nms_thesh)
 
-                if type(output) == int:
-                    frames += 1
-                    print("FPS of the video is {:5.2f}".format( frames / (time.time() - start)), end='\r')
-                    cv2.imshow("Person Detection", orig_im)
-                    key = cv2.waitKey(1)
-                    if key & 0xFF == ord('q'):
-                        break
-                    continue
-            
-                output[:,1:5] = torch.clamp(output[:,1:5], 0.0, float(self.inp_dimensions))/self.inp_dimensions
+                if not type(output) == int:
 
-                im_dim = im_dim.repeat(output.size(0), 1)
-                output[:,[1,3]] *= frame.shape[1]
-                output[:,[2,4]] *= frame.shape[0]
+                    output[:,1:5] = torch.clamp(output[:,1:5], 0.0, float(self.inp_dimensions))/self.inp_dimensions
+
+                    im_dim = im_dim.repeat(output.size(0), 1)
+                    output[:,[1,3]] *= frame.shape[1]
+                    output[:,[2,4]] *= frame.shape[0]
             
-                list(map(lambda x: self.draw_results(x, orig_im), output))
+                    list(map(lambda x: self.draw_results(x, orig_im), output))
             
                 cv2.imshow("Person Detection", orig_im)
-                key = cv2.waitKey(1)
-                if key & 0xFF == ord('q'):
+                if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
                 frames += 1
                 print("FPS of the video is {:5.2f}".format( frames / (time.time() - start)), end='\r')
-
-            else:
-                break
     
     def __init__(self):
         '''
