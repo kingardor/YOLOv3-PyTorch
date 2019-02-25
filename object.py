@@ -36,25 +36,36 @@ class Detection:
             temp.append(r)
             self.colors.append(temp)
 
-    def draw_results(self, x, img):
+    def draw_results(self, output, img):
         ''' 
         Draw the bounding box and results on the frame.
         '''
 
-        c1 = tuple(x[1:3].int())
-        c2 = tuple(x[3:5].int())
-        cls = int(x[-1])
-        label = "{0}".format(self.classes[cls])
-        if not label == 'person':
-            return
-        score = str("{0:.3f}".format(float(x[5])))
-        color = self.colors[cls]
-        cv2.rectangle(img, c1, c2, color, 2)
-        cv2.rectangle(img, c1, (c1[0] + (len(label) + len(score)) * 10, 
-                      c1[1] - 10) , color, -1, cv2.LINE_AA)
-        cv2.putText(img, label + ':' + score, c1, 
-                    cv2.FONT_HERSHEY_COMPLEX, 0.4, (0, 0, 0), 1, cv2.LINE_AA)
-        return img
+        for x in output:
+
+            if float(x[5]) <= 0 or float(x[5]) > 1:
+                continue
+
+            cls = int(x[-1])
+            if int(cls)<0 or int(cls)>80:
+                continue
+
+            c1 = tuple(x[1:3].int())
+            c2 = tuple(x[3:5].int())
+
+            x1, y1 = c1[0].item(), c1[1].item()
+            x2, y2 = c2[0].item(), c2[1].item()
+                
+            label = "{0}".format(self.classes[cls])
+            score = str("{0:.3f}".format(float(x[5])))
+            color = self.colors[cls]
+            
+            cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+            cv2.rectangle(img, (x1, y1), (x1 + (len(label) + len(score)) * 10, 
+                            y1 - 10) , color, -1, cv2.LINE_AA)
+            cv2.putText(img, label + ':' + score, (x1, y1), 
+                        cv2.FONT_HERSHEY_COMPLEX, 0.4, (0, 0, 0), 1, cv2.LINE_AA)
+            return img
 
     def argsparser(self):
         '''
@@ -68,7 +79,7 @@ class Detection:
                             'Input resolution of the network. Increase to increase accuracy. Decrease to increase speed',
                             default=416, type=int)
         parser.add_argument('--source', dest='source', default=0, help='Input video source', type=str)
-        parser.add_argument('--skip', dest='skip', default=False, help='Frame skip to increase speed', action='store_true')
+        parser.add_argument('--skip', dest='skip', default=1, help='Frame skip to increase speed', type=int)
         return parser.parse_args()
     
     def run(self):
@@ -86,17 +97,16 @@ class Detection:
         
             ret, frame = cap.read()
             if ret:
-                if self.args.skip:
-                    if not frames%2 == 0:
-                        frames += 1
-                        continue
+                if not frames % self.args.skip == 0:
+                    frames += 1
+                    continue
+                
                 img, orig_im, dim = prep_image(frame, self.inp_dimensions)
                 im_dim = torch.FloatTensor(dim).repeat(1, 2)                        
             
                 if self.CUDA:
                     im_dim = im_dim.cuda()
                     img = img.cuda()
-            
             
                 output = self.model(Variable(img), self.CUDA)
                 output = write_results(output, self.confidence, self.num_classes, nms = True, nms_conf = self.nms_thesh)
@@ -109,9 +119,9 @@ class Detection:
                     output[:,[1,3]] *= frame.shape[1]
                     output[:,[2,4]] *= frame.shape[0]
             
-                    list(map(lambda x: self.draw_results(x, orig_im), output))
+                    orig_im = self.draw_results(output, orig_im)
             
-                cv2.imshow("Person Detection", orig_im)
+                cv2.imshow(self.windowName, orig_im)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
                 frames += 1
@@ -148,15 +158,12 @@ class Detection:
         self.model.eval()
 
         self.color_generator()
-        cv2.namedWindow("Person Detection", cv2.WND_PROP_FULLSCREEN)
-        cv2.setWindowProperty("Person Detection", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        self.windowName = "Object Detection"
+        cv2.namedWindow(self.windowName, cv2.WND_PROP_FULLSCREEN)
+        cv2.setWindowProperty(self.windowName, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
 if __name__ == '__main__':
 
     detection = Detection()
     detection.run()
     
-
-    
-    
-
