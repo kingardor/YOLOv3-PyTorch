@@ -65,7 +65,8 @@ class Detection:
                             y1 - 10) , color, -1, cv2.LINE_AA)
             cv2.putText(img, label + ':' + score, (x1, y1), 
                         cv2.FONT_HERSHEY_COMPLEX, 0.4, (0, 0, 0), 1, cv2.LINE_AA)
-            return img
+        
+        return img
 
     def argsparser(self):
         '''
