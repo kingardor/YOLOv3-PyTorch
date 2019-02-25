@@ -36,7 +36,7 @@ class Detection:
             temp.append(r)
             self.colors.append(temp)
 
-    def draw_results(self, output, img):
+    def plot_results(self, output, img):
         ''' 
         Draw the bounding box and results on the frame.
         '''
@@ -119,7 +119,7 @@ class Detection:
                     output[:,[1,3]] *= frame.shape[1]
                     output[:,[2,4]] *= frame.shape[0]
             
-                    orig_im = self.draw_results(output, orig_im)
+                    orig_im = self.plot_results(output, orig_im)
             
                 cv2.imshow(self.windowName, orig_im)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
